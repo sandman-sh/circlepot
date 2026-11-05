@@ -1,5 +1,5 @@
 import { formatUnits, parseUnits, type Address, type Hash } from 'viem'
-import { NATIVE_DECIMALS } from './web3'
+import { EVM_DECIMALS } from './web3'
 
 export type CircleRow = {
   id: bigint
@@ -58,24 +58,24 @@ export const copyText = async (text: string) => {
 }
 
 export const formatPot = (value: bigint, digits = 2) => {
-  const [whole, fraction = ''] = formatUnits(value, NATIVE_DECIMALS).split('.')
+  const [whole, fraction = ''] = formatUnits(value, EVM_DECIMALS).split('.')
   let precision = Math.min(digits, fraction.length)
   while (precision < fraction.length && /[1-9]/.test(fraction.slice(precision))) precision += 1
   const decimals = fraction.slice(0, precision).replace(/0+$/, '')
   return `${BigInt(whole).toLocaleString('en-US')}${decimals ? `.${decimals}` : ''}`
 }
 
-// viem's parseUnits silently truncates excess decimals, so enforce POT's 14 explicitly.
+// viem's parseUnits silently truncates excess decimals, so enforce EVM POT's 18 explicitly.
 /** Rounded balance-style display (2dp max) — formatPot keeps full precision for amounts owed. */
 export const formatPotShort = (value: bigint) => {
-  const n = Number(formatUnits(value, NATIVE_DECIMALS))
+  const n = Number(formatUnits(value, EVM_DECIMALS))
   return n.toLocaleString('en-US', { maximumFractionDigits: 2 })
 }
 
 export const amountToWei = (value: string) => {
   const trimmed = value.trim()
-  if (!/^\d+(\.\d{1,14})?$/.test(trimmed)) throw new Error('Invalid POT amount (max 14 decimal places)')
-  return parseUnits(trimmed, NATIVE_DECIMALS)
+  if (!/^\d+(\.\d{1,18})?$/.test(trimmed)) throw new Error('Invalid POT amount (max 18 decimal places)')
+  return parseUnits(trimmed, EVM_DECIMALS)
 }
 
 export const isValidAddress = (value: string) => /^0x[a-fA-F0-9]{40}$/.test(value.trim())

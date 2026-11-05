@@ -68,10 +68,10 @@ Read [SECURITY.md](SECURITY.md) for the contract's design properties and review 
 | Network | Portaldot V3 Testnet |
 | EVM chain ID | 420420777 (`0x190f1ca9`) |
 | RPC | [test-evm-rpc-v3.portaldot.dev](https://test-evm-rpc-v3.portaldot.dev) |
-| Native gas token | POT (14 decimals) |
+| EVM native gas token | POT (18 decimals, wei units) |
 | Explorer | [scanner-testnet-v3.portaldot.dev](https://scanner-testnet-v3.portaldot.dev) |
 
-The app needs a browser EVM wallet and test POT at that wallet's EVM address to send transactions. All writes require wallet approval. A native Portaldot address and an EVM address are distinct address formats; request test funds for the address and network you intend to use.
+The app needs a browser EVM wallet and test POT at that wallet's EVM address to send transactions. EVM balances and transaction values use 18-decimal wei units; the Substrate-native wallet displays POT with 14 decimals. All writes require wallet approval. A native Portaldot address and an EVM address are distinct address formats; request test funds for the address and network you intend to use.
 
 ## Run locally
 

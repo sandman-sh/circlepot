@@ -9,7 +9,7 @@ import { toCanvas as qrToCanvas } from 'qrcode'
 import { formatUnits, type Address } from 'viem'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { explorerAddressUrl, explorerTxUrl, NATIVE_DECIMALS, portaldotTestnet } from './lib/web3'
+import { explorerAddressUrl, explorerTxUrl, EVM_DECIMALS, portaldotTestnet } from './lib/web3'
 import {
   amountToWei, copyText, errMsg, formatPot, formatPotShort, isValidAddress, shortAddress,
   type ChainEvent, type CircleRow,
@@ -167,7 +167,7 @@ export default function Dashboard({
   const goCircle = (id: bigint) => { onSelect(id); setDashView('circles') }
   const exportCsv = () => {
     const rows = [['block', 'event', 'circle', 'round', 'amount_pot', 'actor', 'tx'], ...feed.map((i) => [String(i.block), i.kind, i.circleId.toString(), '', '', i.actor, i.hash])]
-    events.forEach((e, idx) => { const row = rows[idx + 1]; if (row) { row[3] = String(e.round + 1); row[4] = formatUnits(BigInt(e.amountWei || '0'), NATIVE_DECIMALS) } })
+    events.forEach((e, idx) => { const row = rows[idx + 1]; if (row) { row[3] = String(e.round + 1); row[4] = formatUnits(BigInt(e.amountWei || '0'), EVM_DECIMALS) } })
     const blob = new Blob([rows.map((r) => r.join(',')).join('\n')], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a'); a.href = url; a.download = 'circlepot-activity.csv'; a.click()
@@ -359,7 +359,7 @@ export default function Dashboard({
                 <div className="s-kv"><span>Network</span><strong>Portaldot V3 Testnet</strong></div>
                 <div className="s-kv"><span>Chain ID</span><strong>420420777</strong></div>
                 <div className="s-kv"><span>RPC</span><strong className="s-mono-sm">test-evm-rpc-v3.portaldot.dev</strong></div>
-                <div className="s-kv"><span>Native asset</span><strong>POT Â· 14 decimals</strong></div>
+                <div className="s-kv"><span>EVM asset units</span><strong>POT · 18 decimals</strong></div>
               </div>
               <div className="s-set-actions">
                 <button className="x-btn x-btn-ghost" onClick={() => setFaucetOpen(true)}><Coins size={15} /> Get test POT</button>
@@ -482,7 +482,7 @@ function FlowChart({ events }: { events: ChainEvent[] }) {
     const sorted = [...flow].sort((a, b) => a.block - b.block)
     for (const e of sorted) {
       const idx = Math.min(count - 1, Math.floor(((e.block - min) / span) * count))
-      const pot = Number(formatUnits(BigInt(e.amountWei || '0'), NATIVE_DECIMALS))
+      const pot = Number(formatUnits(BigInt(e.amountWei || '0'), EVM_DECIMALS))
       if (e.kind === 'ContributionMade') { out[idx].contrib += pot; running += pot }
       else { out[idx].payout += pot; running -= pot }
       out[idx].net = Math.max(0, running)
@@ -563,7 +563,7 @@ function CreateCircleDialog({ open, onOpenChange, onCreate, busy, userAddress }:
     event.preventDefault()
     if (!nameBytes || nameBytes > 48) { toast.error('Give your circle a name that fits within 48 UTF-8 bytes.'); return }
     if (!amount || /^0+(?:\.0*)?$/.test(amount)) { toast.error('Enter a contribution greater than zero.'); return }
-    try { amountToWei(amount) } catch { toast.error('Enter a valid amount with up to 14 decimal places.'); return }
+    try { amountToWei(amount) } catch { toast.error('Enter a valid amount with up to 18 decimal places.'); return }
     const invited = invitedText.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean)
     if (invited.length > 12) { toast.error('At most 12 invited addresses.'); return }
     for (const addr of invited) if (!isValidAddress(addr)) { toast.error(`Invalid invited address: ${addr.slice(0, 14)}â€¦`); return }
@@ -582,7 +582,7 @@ function CreateCircleDialog({ open, onOpenChange, onCreate, busy, userAddress }:
         <form className="cf" onSubmit={submit}>
           <label>CIRCLE NAME<input className="cf-name" type="text" autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={48} placeholder="Friday Circle" aria-invalid={nameBytes > 48} /></label>
           <label>CONTRIBUTION PER PERSON, PER ROUND
-            <div className="cf-amount"><input inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setAmountError('') }} onBlur={() => { try { if (amount && amountToWei(amount) <= 0n) setAmountError('Must be more than zero.') } catch { setAmountError('Use up to 14 decimal places.') } }} aria-invalid={!!amountError} placeholder="100" /><span>POT</span></div>
+            <div className="cf-amount"><input inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setAmountError('') }} onBlur={() => { try { if (amount && amountToWei(amount) <= 0n) setAmountError('Must be more than zero.') } catch { setAmountError('Use up to 18 decimal places.') } }} aria-invalid={!!amountError} placeholder="100" /><span>POT</span></div>
             {amountError && <small className="cf-error">{amountError}</small>}
           </label>
           <label>SEATS IN THE CIRCLE
@@ -736,13 +736,13 @@ function GrowthChart({ events, address }: { events: ChainEvent[]; address?: Addr
     if (flow.length < 2) return null
     const acc = { c: 0, paid: 0, my: 0 }
     const pts = flow.map((e) => {
-      const v = Number(formatUnits(BigInt(e.amountWei || '0'), NATIVE_DECIMALS))
+      const v = Number(formatUnits(BigInt(e.amountWei || '0'), EVM_DECIMALS))
       if (e.kind === 'ContributionMade') acc.c += v
       if (e.kind === 'RoundPaid') { acc.paid += v; if (e.actor.toLowerCase() === mine) acc.my += v }
       return { block: e.block, c: acc.c, paid: acc.paid, my: acc.my }
     })
     const { c, paid, my } = acc
-    const refunds = flow.filter((e) => e.kind === 'RoundRefunded').reduce((s, e) => s + Number(formatUnits(BigInt(e.amountWei || '0'), NATIVE_DECIMALS)), 0)
+    const refunds = flow.filter((e) => e.kind === 'RoundRefunded').reduce((s, e) => s + Number(formatUnits(BigInt(e.amountWei || '0'), EVM_DECIMALS)), 0)
     const max = Math.max(1, ...pts.map((p) => Math.max(p.c, p.paid, p.my)))
     const minB = pts[0].block, maxB = pts[pts.length - 1].block
     const X = (b: number) => 8 + ((b - minB) / Math.max(1, maxB - minB)) * 604

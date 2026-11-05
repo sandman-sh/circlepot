@@ -14,7 +14,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import './dashboard.css'
 import { toast } from 'sonner'
 import { circlePotAbi, circlePotBytecode } from './generated/circlePotArtifact'
-import { clearContractAddress, explorerAddressUrl, explorerTxUrl, getInitialContractAddress, NATIVE_DECIMALS, portaldotTestnet, saveContractAddress, setAppView, TESTNET_EXPLORER, TESTNET_RPC } from './lib/web3'
+import { clearContractAddress, explorerAddressUrl, explorerTxUrl, getInitialContractAddress, EVM_DECIMALS, portaldotTestnet, saveContractAddress, setAppView, TESTNET_EXPLORER, TESTNET_RPC } from './lib/web3'
 import {
   amountToWei, copyText, errMsg, formatPot, formatPotShort, shortAddress,
   type ChainEvent, type CircleRow,
@@ -338,7 +338,7 @@ function App() {
     const chainConfig = {
       chainId: chainHex,
       chainName: portaldotTestnet.name,
-      nativeCurrency: { name: 'POT', symbol: 'POT', decimals: NATIVE_DECIMALS },
+      nativeCurrency: { name: 'POT', symbol: 'POT', decimals: EVM_DECIMALS },
       rpcUrls: [TESTNET_RPC],
       blockExplorerUrls: [TESTNET_EXPLORER],
     }

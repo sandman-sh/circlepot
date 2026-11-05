@@ -5,7 +5,9 @@ import { defineChain } from 'viem'
 export const portaldotTestnet = defineChain({
   id: 420420777,
   name: 'Portaldot V3 Testnet',
-  nativeCurrency: { name: 'POT', symbol: 'POT', decimals: 14 },
+  // EVM balances and transaction values use wei-style 18-decimal units.
+  // Portaldot's Substrate wallet metadata (14 decimals) is a separate unit system.
+  nativeCurrency: { name: 'POT', symbol: 'POT', decimals: 18 },
   rpcUrls: { default: { http: ['https://test-evm-rpc-v3.portaldot.dev'] } },
   blockExplorers: {
     default: { name: 'Portaldot V3 Testnet Explorer', url: 'https://scanner-testnet-v3.portaldot.dev' },
@@ -33,7 +35,7 @@ export const wagmiConfig = createConfig({
 
 export const TESTNET_RPC = 'https://test-evm-rpc-v3.portaldot.dev'
 export const TESTNET_EXPLORER = 'https://scanner-testnet-v3.portaldot.dev'
-export const NATIVE_DECIMALS = 14
+export const EVM_DECIMALS = 18
 
 // Route shapes verified against the live Portaldot V3 scanner bundle
 // (routes /tx/:id and /addresses/:address) on the production explorer.
