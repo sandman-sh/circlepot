@@ -26,6 +26,10 @@ export type TxEntry = { id: number; label: string; hash?: Hash; status: 'pending
 type CircleAction = 'join' | 'contribute' | 'refund' | 'cancel' | 'leave'
 type Eip1193Provider = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }
 
+// The Portaldot V3 testnet RPC returns an unusably large eth_estimateGas value
+// for contract creation. This 5M gas cap safely covers CirclePot's ~8.5 KB initcode.
+const CIRCLEPOT_DEPLOY_GAS_LIMIT = 5_000_000n
+
 declare global {
   interface Window {
     ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }
@@ -415,7 +419,7 @@ function App() {
       toast.loading('Approve deployment in your wallet…', { id: 'deploy' })
       await ensureNetwork()
       if (!publicClient) throw new Error('Portaldot testnet is unavailable. Try again in a moment.')
-      const hash = await deployContractAsync({ abi: circlePotAbi, bytecode: circlePotBytecode, args: [], chainId: portaldotTestnet.id })
+      const hash = await deployContractAsync({ abi: circlePotAbi, bytecode: circlePotBytecode, args: [], chainId: portaldotTestnet.id, gas: CIRCLEPOT_DEPLOY_GAS_LIMIT })
       tx.sent(hash)
       toast.loading('Waiting for CirclePot to deploy…', { id: 'deploy' })
       const receipt = await publicClient.waitForTransactionReceipt({ hash })
