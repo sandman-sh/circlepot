@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: npm run build
+      - name: Start local EVM
+        run: |
+          npx --yes ganache@7.9.2 --server.port 8545 --chain.chainId 420420777 --wallet.totalAccounts 5 --wallet.defaultBalance 10000 --wallet.mnemonic "test test test test test test test test test test test junk" --logging.quiet &
+          sleep 6
+      - run: npm run test:contract
+      - run: npm audit --audit-level=high
